@@ -6,7 +6,7 @@
 # All certificates will have subject alternative names, 
 # amoung other things, this makes Chrome happier.
 #
-# For my CA see:
+# For CA see:
 # https://fabianlee.org/2018/02/17/ubuntu-creating-a-trusted-ca-and-san-certificate-using-openssl-on-ubuntu/
 #
 # March-2019, Pat Welch, pat@mousebrains.com
