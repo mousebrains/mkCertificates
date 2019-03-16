@@ -21,7 +21,7 @@ This will make a directory, hostname, which will contain:
 
 1. An openssl configuration file, hostname.config
 2. A private key, hostname.key
-3. A CSR generated from the private key, hostname.csr, with a common name of hostname.local
+3. A CSR generated from the private key and config, hostname.csr, with a common name of hostname.local
 4. A self-signed certificate, hostname.cert, with a common name of hostname.local
 5. A combined PEM file, hostname.pem, which contains both the certificate and private key
 
@@ -62,6 +62,10 @@ To generate a private key and self-signed certificate
 for foo.local and an IP address, 10.1.2.3:
 
 mkLocal.py --self --IP=10.1.2.3 foo
+
+To generate a new CSR from an existing private key:
+
+mkLocal.py --renew hostname
 
 Please use the --help option for additional command line options.
 
