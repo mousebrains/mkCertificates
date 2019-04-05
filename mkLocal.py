@@ -114,7 +114,7 @@ def runCmd(args, opts):
 
 def mkNames(dirname, hostname):
     if not os.path.isdir(dirname):
-        os.mkdir(dirname)
+        os.makedirs(dirname, mode=0o700) # Exclude anybody but the owner from this directory
 
     return (os.path.join(dirname, '{}.config'.format(hostname)),
         os.path.join(dirname, '{}.key'.format(hostname)),
@@ -132,8 +132,10 @@ def mkCA(args):
 
     mkConfig(config, args, args.caPrefix, args.cabits)
     runCmd(args, ['rand', '-out', codigo, '-base64', str(args.cacodigolen)])
+    os.chmod(codigo, 0o600) # Make private to owner
     runCmd(args, ['genrsa', '-out', key, '-aes256', '-passout', 'file:{}'.format(codigo), 
         str(args.cabits)])
+    os.chmod(key, 0o600) # Make private to owner
     runCmd(args, ['req', \
             '-new', \
             '-x509', \
@@ -154,6 +156,7 @@ def mkPEM(cert, key): # Generate combined PEM file
         for fn in [cert, key]:
             with open(fn, 'r') as ifp:
                 ofp.write(ifp.read())
+    os.chmod(pem, 0o600) # Only visible to the owner
 
 parser = argparse.ArgumentParser()
 parser.add_argument('hosts', nargs='+', 
@@ -197,6 +200,7 @@ for host in args.hosts:
 
     if not args.renew: # Generate a new key
         runCmd(args, ['genrsa', '-out', key, str(args.bits)])
+        os.chmod(key, 0o600) # Make private to owner
 
     if args.renew and not os.path.exists(key):
         print('ERROR:', key, 'does not exist')
