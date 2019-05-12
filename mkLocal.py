@@ -75,7 +75,7 @@ def mkConfig(fn, args, host, bits):
 def mkFQDN(name, args):
     if args.domain is None:
         return name
-    return name + "." + args.domain
+    return name + "." + args.domain[0]
 
 def addSANs(prefix, vals, offset):
     a = []
@@ -85,10 +85,14 @@ def addSANs(prefix, vals, offset):
     return a
 
 def mkSAN(host, args):
-    a = ['DNS.1 = {}'.format(mkFQDN(host, args))]
-    a.extend(addSANs('DNS', args.DNS, 2))
-    a.extend(addSANs('IP', args.IP, 1))
-    a.extend(addSANs('email', args.email, 1))
+    a = [];
+    if args.domain is not None:
+        for i in range(len(args.domain)):
+            a.append('DNS.{} = {}'.format(i, host + "." + args.domain[i]))
+
+    a.extend(addSANs('DNS', args.DNS, len(a)))
+    a.extend(addSANs('IP', args.IP, 0))
+    a.extend(addSANs('email', args.email, 0))
     return a
         
 def mkSubject(args, commonName):
@@ -166,7 +170,7 @@ parser.add_argument('--days', default=3650, help='# of days certificates are val
 parser.add_argument('--DNS', action='append', help='subjectAltNames DNS entries')
 parser.add_argument('--IP', action='append', help='subjectAltNames IP addresses')
 parser.add_argument('--email', action='append', help='subjectAltNames emails')
-parser.add_argument('--domain', default='local', help='domain name to generate FQDN')
+parser.add_argument('--domain', action='append', help='domain name to generate FQDN')
 parser.add_argument('--openssl', default='/usr/bin/openssl', help='openssl command to use')
 parser.add_argument('--country', help='Subject country')
 parser.add_argument('--state', help='Subject state')
