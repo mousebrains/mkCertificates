@@ -125,9 +125,9 @@ def mkNames(dirname, hostname):
         os.makedirs(dirname, mode=0o700) # Exclude anybody but the owner from this directory
 
     return (os.path.join(dirname, '{}.config'.format(hostname)),
-        os.path.join(dirname, '{}.key'.format(hostname)),
-        os.path.join(dirname, '{}.csr'.format(hostname)),
-        os.path.join(dirname, '{}.cert'.format(hostname)))
+            os.path.join(dirname, '{}.key'.format(hostname)),
+            os.path.join(dirname, '{}.csr'.format(hostname)),
+            os.path.join(dirname, '{}.cert'.format(hostname)))
 
 def mkCA(args):
     (config, key, csr, cert) = mkNames(args.caDir, args.caPrefix)
@@ -187,6 +187,7 @@ grp = parser.add_mutually_exclusive_group(required=True)
 grp.add_argument('--self', action='store_true', help='Generate key and self-signed certificate')
 grp.add_argument('--csr', action='store_true', help='Generate key and CSR')
 grp.add_argument('--renew', action='store_true', help='Generate CSR from an existing key')
+grp.add_argument('--sign', action='store_true', help='Sign a CSR using a local CA signed certificate')
 grp.add_argument('--ca', action='store_true', help='Generate key and local CA signed certificate')
 
 parser.add_argument('--caDir', default='CA', help='Directory to store CA in')
@@ -199,15 +200,15 @@ parser.add_argument('--verbose', action='store_true', help='More diagnostics')
 
 args = parser.parse_args()
 
+if args.ca or args.sign:
+  (caKey, caCert, caCodigo) = mkCA(args)
+
 for host in args.hosts:
     print('Working on', host)
 
-    if args.ca:
-        (caKey, caCert, caCodigo) = mkCA(args)
-
     (config, key, csr, cert) = mkNames(host, host)
 
-    if not args.renew: # Generate a new key
+    if not args.renew and not args.sign: # Generate a new key
         runCmd(args, ['genrsa', '-out', key, str(args.bits)])
         os.chmod(key, 0o600) # Make private to owner
 
@@ -217,13 +218,18 @@ for host in args.hosts:
 
     mkConfig(config, args, host, args.bits)
 
-    runCmd(args, ['req', \
-            '-new', \
-            '-extensions', 'v3_req', \
-            '-config', config, \
-            '-sha256', \
-            '-key', key, \
-            '-out', csr])
+    if args.sign:
+        if not os.path.exists(csr):
+            print('ERROR:', csr, 'does not exist')
+            continue
+    else:
+        runCmd(args, ['req', \
+                      '-new', \
+                      '-extensions', 'v3_req', \
+                      '-config', config, \
+                      '-sha256', \
+                      '-key', key, \
+                      '-out', csr])
 
     if args.csr or args.renew: # Only make through a CSR
         if args.verbose: # Print out CSR
