@@ -90,9 +90,13 @@ def mkSAN(host, args):
         for i in range(len(args.domain)):
             a.append('DNS.{} = {}'.format(i, host + "." + args.domain[i]))
 
+    if args.nodomain:
+        a.append('DNS.{} = {}'.format(len(a), host))
+
     a.extend(addSANs('DNS', args.DNS, len(a)))
     a.extend(addSANs('IP', args.IP, 0))
     a.extend(addSANs('email', args.email, 0))
+
     return a
         
 def mkSubject(args, commonName):
@@ -171,6 +175,7 @@ parser.add_argument('--DNS', action='append', help='subjectAltNames DNS entries'
 parser.add_argument('--IP', action='append', help='subjectAltNames IP addresses')
 parser.add_argument('--email', action='append', help='subjectAltNames emails')
 parser.add_argument('--domain', action='append', help='domain name to generate FQDN')
+parser.add_argument('--nodomain', action='store_true', help='SAN of hostname without any domain')
 parser.add_argument('--openssl', default='/usr/bin/openssl', help='openssl command to use')
 parser.add_argument('--country', help='Subject country')
 parser.add_argument('--state', help='Subject state')
